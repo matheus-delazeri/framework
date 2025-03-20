@@ -1,0 +1,3 @@
+### Dependencies
+
+- Install "ext-mysqli"
