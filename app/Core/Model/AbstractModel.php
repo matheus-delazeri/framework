@@ -43,9 +43,9 @@ abstract class AbstractModel {
      *
      * @param WhereExpression|null $filter Where clause to filter
      * @param array|null $fields Fields to query. When null will retrieve all of them
-     * @return IteratorAggregate
+     * @return array
      */
-    public function getCollection(WhereExpression $filter = null, array $fields = null): IteratorAggregate {
+    public function getCollection(WhereExpression $filter = null, array $fields = null): array {
         return $this->connection->select($this->getTable(), $filter, $fields);
     }
 
@@ -102,6 +102,23 @@ abstract class AbstractModel {
         }
 
         $this->id = $this->data[$idField] ?? null;
+
+        return $this;
+    }
+
+    /**
+     * If the object is loaded will update it with the values of $data.
+     * Otherwise, will insert a new register.
+     *
+     * @return AbstractModel
+     */
+    public function save(): self {
+        if ($this->id !== null) {
+            $this->connection->update($this->getTable(), $this->data, new WhereExpression($this->getIdField(), WhereOperator::EQUALS, $this->id));
+            return $this;
+        }
+
+        $this->connection->insert($this->getTable(), $this->data);
 
         return $this;
     }
