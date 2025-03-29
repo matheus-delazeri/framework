@@ -3,25 +3,19 @@
 namespace App\Core;
 
 /** Singleton class */
-class Config {
+class Config extends Singleton {
 
-    private static Config $instance;
-    private static array $config = [];
-
-    public function __construct(array $config = []) {
-        self::$config = $config;
-        self::$instance = $this;
-    }
+    public static array $config = [];
 
     public static function getInstance(array $config = []): Config {
-        if (!isset(self::$instance)) {
-            self::$instance = new self($config);
-        }
+        /** @var Config $instance */
+        $instance = parent::getInstance();
+        if (!empty($config))  $instance::$config = $config;
 
-        return self::$instance;
+        return $instance;
     }
 
-    public static function getValue(string $field) {
+    public static function getValue(string $field): mixed {
         return self::$config[$field] ?? null;
     }
 }

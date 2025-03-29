@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Core\Config\Database\Driver;
+namespace App\Core\Database\Driver;
 
 use App\Core\Config;
-use App\Core\Config\Database\AbstractDriver;
+use App\Core\Database\AbstractDriver;
 
 class DriverFactory {
     public static function create(Config $config): ?AbstractDriver {
