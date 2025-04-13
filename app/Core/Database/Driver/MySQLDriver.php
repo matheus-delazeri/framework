@@ -2,8 +2,10 @@
 
 namespace App\Core\Database\Driver;
 
+use App\Core\Database\Column;
 use App\Core\Database\DriverInterface;
 use App\Core\Database\Query\WhereExpression;
+use App\Core\Enum\ColumnType;
 
 class MySQLDriver implements DriverInterface {
 
@@ -37,8 +39,7 @@ class MySQLDriver implements DriverInterface {
         return $result->fetch_all(MYSQLI_ASSOC);
     }
 
-    function insert(string $table, array $values): bool
-    {
+    function insert(string $table, array $values): bool {
         $table = mysqli_escape_string($this->mysqli, $table);
 
         $columns = array_keys($values);
@@ -85,8 +86,7 @@ class MySQLDriver implements DriverInterface {
         return $result;
     }
 
-    function update(string $table, array $values, WhereExpression $where = null): bool
-    {
+    function update(string $table, array $values, WhereExpression $where = null): bool {
         $table = mysqli_escape_string($this->mysqli, $table);
 
         $setClauses = [];
@@ -134,8 +134,7 @@ class MySQLDriver implements DriverInterface {
         return $result;
     }
 
-    function delete(string $table, WhereExpression $where = null): bool
-    {
+    function delete(string $table, WhereExpression $where = null): bool {
         $table = mysqli_escape_string($this->mysqli, $table);
 
         $query = sprintf("DELETE FROM `%s`", $table);
@@ -154,5 +153,46 @@ class MySQLDriver implements DriverInterface {
         $stmt->close();
 
         return $result;
+    }
+
+    function describe(string $table): array {
+        $table = mysqli_escape_string($this->mysqli, $table);
+
+        $query = sprintf("SHOW COLUMNS from `%s`", $table);
+        $stmt = $this->mysqli->prepare($query);
+        if ($stmt === false) {
+            return [];
+        }
+
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $stmt->close();
+
+        $columns = [];
+        foreach($result->fetch_all(MYSQLI_ASSOC) as $column) {
+            $columns[] = new Column(
+                name: $column['Field'],
+                type: $this->getColumnType($column['Type']),
+                isPrimaryKey: $column['Key'] === 'PRI',
+                nullable: $column['Null'] === 'NO',
+                default: $column['Default']
+            );
+        }
+
+        return $columns;
+    }
+
+    private function getColumnType(string $type): ColumnType {
+        if (str_contains($type, 'int')) {
+            return ColumnType::INT;
+        } else if (str_contains($type, 'float')) {
+            return ColumnType::DECIMAL;
+        } else if (str_contains($type, 'bool')) {
+            return ColumnType::BOOL;
+        } else if (str_contains($type, 'date')) {
+            return ColumnType::DATE;
+        }
+
+        return ColumnType::TEXT;
     }
 }

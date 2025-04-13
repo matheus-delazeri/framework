@@ -7,7 +7,7 @@ class Singleton
     private static array $instances = [];
 
     /**
-     * The singleton should never  be instantiated directly
+     * The singleton should never be instantiated directly
      */
     protected function __construct() { }
     protected function __clone() { }

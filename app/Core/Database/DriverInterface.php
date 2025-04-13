@@ -6,6 +6,13 @@ use App\Core\Database\Query\WhereExpression;
 
 interface DriverInterface {
     function connect(string $host, string $database, string $username, string $password = null): self;
+
+    /**
+     * Allow the execution of a raw query
+     *
+     * @param string $query
+     * @return array
+     */
     function query(string $query): array;
 
     /**
@@ -37,4 +44,12 @@ interface DriverInterface {
      * @return bool
      */
      function delete(string $table, WhereExpression $where = null): bool;
+
+    /**
+     * Return all columns from a given table
+     *
+     * @param string $table
+     * @return Column[]
+     */
+     function describe(string $table): array;
 }

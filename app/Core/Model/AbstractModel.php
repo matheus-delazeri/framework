@@ -1,11 +1,10 @@
 <?php
 
 namespace App\Core\Model;
-use App\Core\Config;
 use App\Core\Database\Connection;
+use App\Core\Database\Column;
 use App\Core\Database\Query\WhereExpression;
 use App\Core\Enum\WhereOperator;
-use IteratorAggregate;
 
 abstract class AbstractModel {
 
@@ -14,8 +13,21 @@ abstract class AbstractModel {
      *
      * @var array
      */
-    protected array $data = [];
+    private array $data = [];
 
+    /**
+     * Associative array where the key is the 
+     * field name and the value it's Column object
+     * 
+     * @var array
+     */
+    private array $fields = [];
+
+    /**
+     * FIXME: doesn't allow tables with compound keys
+     * @var string
+     */
+    private string $idField = 'id';
     protected string|int|null $id = null;
 
     /**
@@ -31,27 +43,66 @@ abstract class AbstractModel {
     private Connection $connection;
 
     public function __construct() {
-        $this->connection = new Connection(Config::getInstance());
+        $this->connection = Connection::getInstance();
+        $this->prepareFields();
+    }
+
+    public function getName(): string {
+        return basename(str_replace('\\', '/', get_class($this)));
+    }
+
+    private function prepareFields(): void {
+        $columns = $this->connection->describe($this->getTable());
+        /** @var Column $column */
+        foreach ($columns as $column) {
+            $this->fields[$column->name] = $column;
+
+            if ($column->isPrimaryKey) {
+                $this->idField = $column->name;
+            }
+        }
     }
 
     public function getIdField(): string {
         return 'id';
     }
 
+    public function getId(): int|string|null {
+        return $this->isLoaded() ? $this->getData($this->getIdField()) : null;
+    }
+
+    public function getFields(): array {
+        return $this->fields;
+    }
+
     /**
      * Return a collection of the current entity
      *
      * @param WhereExpression|null $filter Where clause to filter
-     * @param array|null $fields Fields to query. When null will retrieve all of them
+     * @param AbstractModel[]|null $fields Fields to query. When null will retrieve all of them
      * @return array
      */
     public function getCollection(WhereExpression $filter = null, array $fields = null): array {
-        return $this->connection->select($this->getTable(), $filter, $fields);
+        $items = $this->connection->select($this->getTable(), $filter, $fields);
+        $objects = [];
+        foreach ($items as $item) {
+            $object = new $this;
+            $object->setData($item);
+            $objects[] = $object;
+        }
+
+        return $objects;
     }
 
-    public function getData(string $field = null): array|string|null {
+    public function getData(string|array $field = null): array|string|null {
+        if (!$this->isLoaded()) {
+            return array_fill_keys(array_keys($this->getFields()), null);
+        }
+
         if (is_null($field)) {
             return $this->data;
+        } else if (is_array($field)) {
+            return array_intersect_key($this->data, array_flip($field));
         }
 
         return $this->data[$field] ?? null;
@@ -65,6 +116,10 @@ abstract class AbstractModel {
      * @return $this
      */
     public function addData(string $field, mixed $value): self {
+        if (!isset($this->fields[$field])) {
+            throw new \InvalidArgumentException("Field '$field' does not exists for this model");
+        }
+
         $this->data[$field] = $value;
 
         return $this;
@@ -77,14 +132,17 @@ abstract class AbstractModel {
      * @return $this
      */
     public function setData(array $data): self {
-        $this->data = $data;
-        $this->data[$this->getIdField()] = $this->id;
+        $this->data = array_intersect_key($data, $this->fields);
+        if (!empty($this->data[$this->getIdField()])) {
+            $this->id = $this->data[$this->getIdField()];
+        }
 
         return $this;
     }
 
-    public function getId(): int|string|null {
-        return $this->id;
+
+    public function isLoaded(): bool {
+        return !empty($this->id) && !empty($this->data);
     }
 
     /**
@@ -94,7 +152,7 @@ abstract class AbstractModel {
      */
     public function load(string|int $id, string $idField = null): self {
         $this->data = [];
-        $idField = $idField ?? $this->getIdField();
+        $idField = $idField ?? $this->idField;
         $result = $this->connection->select($this->getTable(), new WhereExpression($idField, WhereOperator::EQUALS, $id));
         foreach ($result as $row) {
             $this->data = $row;
@@ -113,8 +171,8 @@ abstract class AbstractModel {
      * @return AbstractModel
      */
     public function save(): self {
-        if ($this->id !== null) {
-            $this->connection->update($this->getTable(), $this->data, new WhereExpression($this->getIdField(), WhereOperator::EQUALS, $this->id));
+        if ($this->isLoaded()) {
+            $this->connection->update($this->getTable(), $this->data, new WhereExpression($this->idField, WhereOperator::EQUALS, $this->id));
             return $this;
         }
 

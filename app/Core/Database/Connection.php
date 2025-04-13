@@ -5,14 +5,18 @@ namespace App\Core\Database;
 use App\Core\Config;
 use App\Core\Database\Driver\DriverFactory;
 use App\Core\Database\Query\WhereExpression;
-use IteratorAggregate;
+use App\Core\Singleton;
 
-class Connection {
+class Connection extends Singleton {
 
     private DriverInterface $driver;
 
-    public function __construct(Config $config) {
-        $this->driver = DriverFactory::create($config);
+    public static function getInstance(): Connection {
+        /** @var Connection $instance */
+        $instance = parent::getInstance();
+        $instance->driver = DriverFactory::create(Config::getInstance());
+
+        return $instance;
     }
 
     public function query(string $query): array {
@@ -33,5 +37,9 @@ class Connection {
 
     public function delete(string $table, WhereExpression $where = null): bool {
         return $this->driver->delete($table, $where);
+    }
+
+    public function describe(string $table): array {
+        return $this->driver->describe($table);
     }
 }
