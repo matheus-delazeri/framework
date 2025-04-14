@@ -9,22 +9,15 @@ use App\Core\View\Terminal\TerminalView;
 
 class EditForm extends TerminalView {
 
-    protected string $title;
-    protected string $subtitle;
+    /**
+     * Model or loaded register to edit or create
+     *
+     * @var AbstractModel
+     */
     protected AbstractModel $model;
 
-    public function __construct(AbstractModel $model, $title = null) {
+    public function __construct(AbstractModel $model) {
         $this->model = $model;
-        $this->title = $title ??  'Form ' . $model::class;
-        $this->subtitle = 'ID: ' . $model->getId();
-    }
-
-    public function getTitle(): string {
-        return $this->title;
-    }
-
-    public function getSubtitle(): string {
-        return $this->subtitle;
     }
 
     public function getFields(): array {
@@ -46,8 +39,17 @@ class EditForm extends TerminalView {
         return $fields;
     }
 
-    protected function _render(AbstractController $controller): void
-    {
-        // TODO: Implement _render() method.
+    protected function _render(AbstractController $controller): void {
+        printf("\n----- [FORM] %s -----\n\n", $this->model->getName());
+        if ($this->model->isLoaded()) {
+            printf("ID: %s\n", $this->model->getId());
+        }
+
+        printf("\n[FIELDS]\n");
+        foreach ($this->getFields() as $field) {
+            printf("- %s: %s\n", $field['field'], $field['value']);
+        }
+        printf("\n");
+        (new Toolbar())->render($controller);
     }
 }

@@ -9,6 +9,5 @@ if (empty($env)) {
 
 \App\Core\Config::getInstance($env);
 
-
-$controller = new \App\Lab\Controller\MovieController();
+$controller = new \App\Lab\Controller\IndexController();
 $controller->redirect('index');

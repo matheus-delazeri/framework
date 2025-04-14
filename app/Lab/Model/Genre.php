@@ -4,12 +4,13 @@ namespace App\Lab\Model;
 
 use App\Core\Model\AbstractModel;
 
-class Movie extends AbstractModel {
+class Genre extends AbstractModel {
+
     function getTable(): string {
-        return 'movies';
+        return 'genres';
     }
 
     public function getIdField(): string {
-        return 'movie_id';
+        return 'genre_id';
     }
 }

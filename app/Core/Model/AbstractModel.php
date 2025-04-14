@@ -181,4 +181,13 @@ abstract class AbstractModel {
         return $this;
     }
 
+    public function delete(): self {
+        if (!$this->isLoaded()) {
+            return $this;
+        }
+
+        $this->connection->delete($this->getTable(), new WhereExpression($this->idField, WhereOperator::EQUALS, $this->id));
+        return $this;
+    }
+
 }
