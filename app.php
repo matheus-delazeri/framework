@@ -9,5 +9,5 @@ if (empty($env)) {
 
 \App\Core\Config::getInstance($env);
 
-$controller = new \App\Lab\Controller\IndexController();
+$controller = new \App\Test\Controller\IndexController();
 $controller->redirect('index');

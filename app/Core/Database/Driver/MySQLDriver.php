@@ -39,7 +39,7 @@ class MySQLDriver implements DriverInterface {
         return $result->fetch_all(MYSQLI_ASSOC);
     }
 
-    function insert(string $table, array $values): bool {
+    function insert(string $table, array $values): int|string {
         $table = mysqli_escape_string($this->mysqli, $table);
 
         $columns = array_keys($values);
@@ -80,10 +80,10 @@ class MySQLDriver implements DriverInterface {
         }
 
         $stmt->bind_param($types, ...$bindParams);
-        $result = $stmt->execute();
+        $stmt->execute();
         $stmt->close();
 
-        return $result;
+        return mysqli_insert_id($this->mysqli);
     }
 
     function update(string $table, array $values, WhereExpression $where = null): bool {
@@ -194,5 +194,24 @@ class MySQLDriver implements DriverInterface {
         }
 
         return ColumnType::TEXT;
+    }
+
+    function tables(): array {
+        $query = "SHOW TABLES";
+        $stmt = $this->mysqli->prepare($query);
+        if ($stmt === false) {
+            return [];
+        }
+
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $stmt->close();
+
+        $tables = [];
+
+        foreach ($result->fetch_all() as $row) {
+            $tables[] = reset($row);
+        }
+        return $tables;
     }
 }

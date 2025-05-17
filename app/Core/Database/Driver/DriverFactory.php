@@ -16,7 +16,7 @@ class DriverFactory {
         if ($driver instanceof DriverInterface) {
             $driver->connect(
                 $config::getValue('DB_HOST'),
-                $config::getValue('DB_DATABASE'),
+                $config::getValue('DB_NAME'),
                 $config::getValue('DB_USERNAME'),
                 $config::getValue('DB_PASSWORD')
             );

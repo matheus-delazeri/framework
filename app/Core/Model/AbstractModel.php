@@ -64,7 +64,7 @@ abstract class AbstractModel {
     }
 
     public function getIdField(): string {
-        return 'id';
+        return $this->idField;
     }
 
     public function getId(): int|string|null {
@@ -176,7 +176,7 @@ abstract class AbstractModel {
             return $this;
         }
 
-        $this->connection->insert($this->getTable(), $this->data);
+        $this->id = $this->connection->insert($this->getTable(), $this->data);
 
         return $this;
     }

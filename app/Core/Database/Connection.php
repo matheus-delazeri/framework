@@ -27,7 +27,7 @@ class Connection extends Singleton {
         return $this->driver->select($from, $where, $fields);
     }
 
-    public function insert(string $table, array $values): bool {
+    public function insert(string $table, array $values): int|string {
         return $this->driver->insert($table, $values);
     }
 
@@ -37,6 +37,10 @@ class Connection extends Singleton {
 
     public function delete(string $table, WhereExpression $where = null): bool {
         return $this->driver->delete($table, $where);
+    }
+
+    public function tables(): array {
+        return $this->driver->tables();
     }
 
     public function describe(string $table): array {

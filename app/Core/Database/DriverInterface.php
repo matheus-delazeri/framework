@@ -28,7 +28,7 @@ interface DriverInterface {
      * @param array $values
      * @return bool
      */
-     function insert(string $table, array $values): bool;
+     function insert(string $table, array $values): int|string;
 
     /**
      * @param string $table
@@ -44,6 +44,13 @@ interface DriverInterface {
      * @return bool
      */
      function delete(string $table, WhereExpression $where = null): bool;
+
+      /**
+     * Return all tables of the connected database
+     *
+     * @return array
+     */
+     function tables(): array;
 
     /**
      * Return all columns from a given table
